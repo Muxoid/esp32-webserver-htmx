@@ -12,11 +12,13 @@
 const char* ssid = "Wifi_SSID";
 const char* password = "Wifi Password";
 
+
 WebServer server(80);
 Servo myServo;
-int currentPosition = 0;
+int currentPosition = 90;
 // Initial value for demonstration
-int value = 0;
+int value = 15;
+int progressBarWidth;
 
 void setup() {
  Serial.begin(115200);
@@ -48,18 +50,46 @@ void setup() {
 
   server.on("/increment", HTTP_GET, []() {
     
-    if (value < 60){
+    if (value < 30){
       value++; // Increment the value
-      server.send(200, "text/html", "Volume: " + String(value)); // Send back only the updated value
-      moveServo(3);
+      
+      moveServo(6);
+      // Calculate the new width percentage
+      progressBarWidth = (value * 100) / 30;
+
+      // Generate the updated progress bar HTML snippet
+      String volumeValue = 
+      "<div id=\"barCount\">"
+        "<div class=\"progress\" role=\"progressbar\"  aria-valuemin=\"0\" aria-valuemax=\"60\" aria-valuenow=\"0\" aria-labelledby=\"pblabel\">"
+              "<div id=\"pb\" class=\"progress-bar\" style=\"width:" + String(progressBarWidth) + "%\">" + String(progressBarWidth) + "%</div>"
+        "</div>"
+       "</div>";
+
+      server.send(200, "text/html", volumeValue );
     }
   });
+
+  
+
+
 
   server.on("/decrement", HTTP_GET, []() {
     if (value > 0){
       value--; // Decrement the value
-      server.send(200, "text/html", "Volume: " + String(value)); // Send back only the updated value
-      moveServo(-3);
+      //server.send(200, "text/html", "Volume: " + String(value)); // Send back only the updated value
+      moveServo(-6);
+      // Calculate the new width percentage
+      progressBarWidth = (value * 100) / 30;
+
+      // Generate the updated progress bar HTML snippet
+      String volumeValue = 
+       "<div id=\"barCount\">"
+           "<div class=\"progress\" role=\"progressbar\"  aria-valuemin=\"0\" aria-valuemax=\"60\" aria-valuenow=\"0\" aria-labelledby=\"pblabel\">"
+              "<div id=\"pb\" class=\"progress-bar\" style=\"width:" + String(progressBarWidth) + "%\">" + String(progressBarWidth) + "%</div>"
+            "</div>"
+        "</div>";
+
+      server.send(200, "text/html", volumeValue );
     }
 
   });
@@ -73,7 +103,10 @@ void loop() {
 
 void sendMainPage() {
   // Dynamic part for the value display
-  String valueDisplay = "<span id='value-display'>Volume: " + String(value) + "</span>";
+  int progressBarWidth = (value * 100) / 30;
+
+  
+
 
   String html =
   "<!DOCTYPE html><html>"
@@ -100,6 +133,29 @@ void sendMainPage() {
   "  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); "
   "}"
   ".btn { margin: 5px; }"
+  ".progress {"
+                    "    height: 20px;"
+                    "    margin-bottom: 20px;"
+                    "    overflow: hidden;"
+                    "    background-color: #f5f5f5;"
+                    "    border-radius: 4px;"
+                    "    box-shadow: inset 0 1px 2px rgba(0,0,0,.1);"
+                    "}"
+                    ".progress-bar {"
+                    "    float: left;"
+                    "    width: 0%;"
+                    "    height: 100%;"
+                    "    font-size: 12px;"
+                    "    line-height: 20px;"
+                    "    color: #fff;"
+                    "    text-align: center;"
+                    "    background-color: #337ab7;"
+                    "    -webkit-box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);"
+                    "    box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);"
+                    "    -webkit-transition: width .6s ease;"
+                    "    -o-transition: width .6s ease;"
+                    "    transition: width .6s ease;"
+                    "}"
   "</style>"
   "</head>"
   "<body>"
@@ -108,9 +164,13 @@ void sendMainPage() {
   "    <div class=\"col-12 col-md-8 text-center\">"
   "      <h1>Volume Control</h1>"
   "      <div id=\"control-panel\" class=\"my-4\">"
-  "        <button class=\"btn btn-success\" hx-get=\"/increment\" hx-target=\"#value-display\" hx-swap=\"innerHTML\">Up</button>"
-  "        <span id=\"value-display\" class=\"d-block my-3\">Volume: "+ String(value) +"</span>"
-  "        <button class=\"btn btn-danger\" hx-get=\"/decrement\" hx-target=\"#value-display\" hx-swap=\"innerHTML\">Down</button>"
+  "        <button class=\"btn btn-success\" hx-get=\"/increment\" hx-target=\"#barCount\" hx-swap=\"outerHTML\">Up</button>"
+  "        <div id=\"barCount\">"
+            "<div class=\"progress\" role=\"progressbar\" hx-target=\"#this\" hx-swap=\"outerHTML\" aria-valuemin=\"0\" aria-valuemax=\"60\" aria-valuenow=\"0\" aria-labelledby=\"pblabel\">"
+              "<div id=\"pb\" class=\"progress-bar\" style=\"width:" + String(progressBarWidth) + "%\">" + String(progressBarWidth) + "%</div>"
+            "</div>"
+           "</div>"
+  "        <button class=\"btn btn-danger\" hx-get=\"/decrement\" hx-target=\"#barCount\" hx-swap=\"outerHTML\">Down</button>"
   "      </div>"
   "    </div>"
   "  </div>"
@@ -124,7 +184,7 @@ void sendMainPage() {
 
 void moveServo(int delta) {
     // Update currentPosition based on the input delta
-    currentPosition += delta;
+    currentPosition -= delta;
     
     // Clamp the currentPosition to ensure it's within 0 to MAX_DEGREE degrees
     currentPosition = max(0, min(currentPosition, MAX_DEGREE));
