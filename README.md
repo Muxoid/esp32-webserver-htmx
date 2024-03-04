@@ -57,3 +57,7 @@ If you have any questions or feedback, please open an issue in the GitHub reposi
 ---
 
 Happy Coding!
+
+<img src="https://github.com/Muxoid/esp32-webserver-htmx/assets/17557003/f49f10bc-b36a-4847-b6ad-417eb7d7eccc" width="300" height="600">
+
+
